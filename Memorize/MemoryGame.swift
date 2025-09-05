@@ -19,9 +19,18 @@ struct MemoryGame<CardContent: Equatable> {
         }
     }
     private(set) var cards: Array<Card>
+    private(set) var score: Int = 0
+    private(set) var alreadySeenCardIndexes: Set<Int> = []
+    private(set) var time: Date = Date.now
+    
     private(set) var indexOfTheOneAndOnlyFaceUpCard: Int? {
         get { cards.indices.filter { cards[$0].isFaceUp }.only }
         set { cards.indices.forEach { cards[$0].isFaceUp = (newValue == $0) } }
+    }
+    
+    var timeSecondsDelta: Int {
+        let interval = time.timeIntervalSinceNow
+        return Int(interval)
     }
     
     init(numberOfPairsOfCards: Int, cardContentFactory: (Int) -> CardContent) {
@@ -35,6 +44,16 @@ struct MemoryGame<CardContent: Equatable> {
         }
     }
     
+    // MARK: Mutating functions
+    
+    mutating func incrementScore(by number: Int) {
+        score += number
+    }
+    
+    mutating func resetScore() {
+        score = 0
+    }
+    
     mutating func shuffle() {
         cards.shuffle()
     }
@@ -46,7 +65,23 @@ struct MemoryGame<CardContent: Equatable> {
                     if cards[chosenIndex].content == cards[potentialMatchIndex].content {
                         cards[chosenIndex].isMatched = true
                         cards[potentialMatchIndex].isMatched = true
+                        
+                        incrementScore(by: 200 + (timeSecondsDelta * 20))
+                    } else {
+                        if alreadySeenCardIndexes.contains(chosenIndex) {
+                            incrementScore(by: -100)
+                        } else {
+                            alreadySeenCardIndexes.insert(chosenIndex)
+                        }
+                        if alreadySeenCardIndexes.contains(potentialMatchIndex) {
+                            incrementScore(by: -100)
+                        } else {
+                            alreadySeenCardIndexes.insert(potentialMatchIndex)
+                        }
                     }
+                    
+                    // Resetting the timer
+                    time = Date.now
                 } else {
                     indexOfTheOneAndOnlyFaceUpCard = chosenIndex
                 }

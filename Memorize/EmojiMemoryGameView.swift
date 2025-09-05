@@ -23,53 +23,27 @@ struct EmojiMemoryGameView: View {
                     .animation(.default, value: viewModel.cards)
             }
             Spacer()
+            Text("Score: \(viewModel.score)")
+                .font(.headline.bold())
+            Text(viewModel.time, style: .timer)
+                .font(.headline.bold())
             Button {
                 viewModel.makeNewGame()
             } label: {
                 Label("New Game", systemImage: "gamecontroller.fill")
+                    .font(.subheadline)
+                    .padding(4)
             }
+            
         }
         .padding()
-        .onChange(of: viewModel.emojiThemeOld) {
+        .onChange(of: viewModel.chosenEmojiTheme) {
             viewModel.shuffleCards()
         }
     }
     
-    func buildThemePickerButton(_ theme: EmojiThemes) -> some View {
-        Button {
-            viewModel.setEmojiTheme(theme)
-        } label: {
-            VStack(alignment: .center) {
-                Group {
-                    switch theme {
-                    case .halloween:
-                        Image(systemName: "balloon.fill")
-                    case .animals:
-                        Image(systemName: "hare.fill")
-                    case .ocean:
-                        Image(systemName: "fish.fill")
-                    }
-                }
-                .imageScale(.large)
-                .font(.largeTitle)
-                
-                Text(theme.rawValue)
-                    .font(.subheadline)
-            }
-        }
-        .foregroundStyle(theme == viewModel.emojiThemeOld ? viewModel.emojiThemeOld.color : .primary)
-    }
-    
-    var themePicker: some View {
-        HStack(alignment: .lastTextBaseline) {
-            ForEach(EmojiThemes.allCases, id: \.self) { theme in
-                buildThemePickerButton(theme)
-            }
-        }
-    }
-    
     var title: some View {
-        Text("Memorize!")
+        Text("Memorize: \(viewModel.chosenEmojiTheme.name)")
             .font(.largeTitle.bold())
     }
     
@@ -109,7 +83,7 @@ struct EmojiMemoryGameView: View {
                     }
             }
         }
-        .foregroundStyle(viewModel.emojiThemeOld.color)
+        .foregroundStyle(viewModel.emojiThemeColor)
     }
 }
 
