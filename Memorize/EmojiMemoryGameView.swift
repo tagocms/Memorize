@@ -9,6 +9,7 @@ import SwiftUI
 
 struct EmojiMemoryGameView: View {
     @ObservedObject var viewModel: EmojiMemoryGame
+    private let cardAspectRatio: CGFloat = 2/3
     
     
     init(_ game: EmojiMemoryGame) {
@@ -18,10 +19,8 @@ struct EmojiMemoryGameView: View {
     var body: some View {
         VStack(alignment: .center) {
             title
-            ScrollView {
-                cards
-                    .animation(.default, value: viewModel.cards)
-            }
+            cards
+                .animation(.default, value: viewModel.cards)
             Spacer()
             Text("Score: \(viewModel.score)")
                 .font(.headline.bold())
@@ -47,41 +46,13 @@ struct EmojiMemoryGameView: View {
             .font(.largeTitle.bold())
     }
     
-    func optimalGridSize(for cardCount: Int) -> Double {
-        switch cardCount {
-        case ...8:
-            return 100
-        case ...12:
-            return 85
-        case ...24:
-            return 65
-        case 25...:
-            return 50
-        default:
-            return 65
-        }
-    }
-    
     var cards: some View {
-        LazyVGrid(
-            columns: [
-                GridItem(
-                    .adaptive(
-                        minimum: optimalGridSize(for: viewModel.cards.count)
-                    ),
-                    spacing: 0
-                )
-            ],
-            spacing: 0
-        ) {
-            ForEach(viewModel.cards) { card in
-                CardView(card)
-                    .aspectRatio(2/3, contentMode: .fit)
-                    .padding(4)
-                    .onTapGesture {
-                        viewModel.chooseCard(card)
-                    }
-            }
+        AspectVGrid(viewModel.cards, aspectRatio: cardAspectRatio) { card in
+            CardView(card)
+                .padding(4)
+                .onTapGesture {
+                    viewModel.chooseCard(card)
+                }
         }
         .foregroundStyle(viewModel.emojiThemeColor)
     }
