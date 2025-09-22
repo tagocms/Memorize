@@ -8,12 +8,14 @@
 import SwiftUI
 
 class EmojiMemoryGame: ObservableObject {
+    typealias Card = MemoryGame<String>.Card
+    
     @Published private var memoryGame: MemoryGame<String>
     @Published private(set) var chosenEmojiTheme: EmojiTheme
     
     private let emojiThemes: [EmojiTheme]
     
-    var cards: Array<MemoryGame<String>.Card> {
+    var cards: Array<Card> {
         return memoryGame.cards
     }
     
@@ -156,7 +158,7 @@ class EmojiMemoryGame: ObservableObject {
         memoryGame.shuffle()
     }
     
-    func chooseCard(_ card: MemoryGame<String>.Card) {
+    func chooseCard(_ card: Card) {
         memoryGame.choose(card)
     }
     
