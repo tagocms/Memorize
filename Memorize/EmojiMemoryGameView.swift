@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct EmojiMemoryGameView: View {
+    typealias Card = MemoryGame<String>.Card
     @ObservedObject var viewModel: EmojiMemoryGame
     
     private let cardAspectRatio: CGFloat = 2/3
@@ -22,24 +23,39 @@ struct EmojiMemoryGameView: View {
         VStack(alignment: .center) {
             title
             cards
-                .animation(.default, value: viewModel.cards)
             Spacer()
-            Text("Score: \(viewModel.score)")
-                .font(.headline.bold())
-            Text(viewModel.time, style: .timer)
-                .font(.headline.bold())
-            Button {
-                viewModel.makeNewGame()
-            } label: {
-                Label("New Game", systemImage: "gamecontroller.fill")
-                    .font(.subheadline)
-                    .padding(spacing)
-            }
-            
+            score
+            timer
+            newGame
         }
         .padding()
         .onChange(of: viewModel.chosenEmojiTheme) {
-            viewModel.shuffleCards()
+            withAnimation {
+                viewModel.shuffleCards()
+            }
+        }
+    }
+    
+    private var score: some View {
+        Text("Score: \(viewModel.score)")
+            .font(.headline.bold())
+            .animation(nil)
+    }
+    
+    private var timer: some View {
+        Text(viewModel.time, style: .timer)
+            .font(.headline.bold())
+    }
+    
+    private var newGame: some View {
+        Button {
+            withAnimation {
+                viewModel.makeNewGame()
+            }
+        } label: {
+            Label("New Game", systemImage: "gamecontroller.fill")
+                .font(.subheadline)
+                .padding(spacing)
         }
     }
     
@@ -52,11 +68,18 @@ struct EmojiMemoryGameView: View {
         AspectVGrid(viewModel.cards, aspectRatio: cardAspectRatio) { card in
             CardView(card)
                 .padding(spacing)
+                .overlay(FlyingNumber(number: scoreChange(causedBy: card)))
                 .onTapGesture {
-                    viewModel.chooseCard(card)
+                    withAnimation {
+                        viewModel.chooseCard(card)
+                    }
                 }
         }
         .foregroundStyle(viewModel.emojiThemeColor)
+    }
+    
+    private func scoreChange(causedBy card: Card) -> Int {
+        return 0
     }
 }
 
