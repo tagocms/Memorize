@@ -89,7 +89,7 @@ class EmojiMemoryGame: ObservableObject {
     
     private func refreshChosenEmoji() {
         let randomIndex = Int.random(in: 0..<emojiThemes.count)
-        self.chosenEmojiTheme = self.emojiThemes.count >= 1 ? self.emojiThemes[randomIndex] : EmojiTheme(
+        chosenEmojiTheme = self.emojiThemes.count >= 1 ? self.emojiThemes[randomIndex] : EmojiTheme(
             name: "Halloween",
             emojis: ["👻", "🎃", "🕷️", "😈", "💀", "🕸️", "🧙‍♂️", "🙀", "👹", "😱", "☠️", "🍭"],
             numberOfPairs: 12,

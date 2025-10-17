@@ -66,7 +66,7 @@ struct MemoryGame<CardContent: Equatable> {
                         cards[chosenIndex].isMatched = true
                         cards[potentialMatchIndex].isMatched = true
                         
-                        incrementScore(by: 200 + (timeSecondsDelta * 20))
+                        incrementScore(by: max(200 + (timeSecondsDelta * 20), 0))
                     } else {
                         if alreadySeenCardIndexes.contains(chosenIndex) {
                             incrementScore(by: -100)

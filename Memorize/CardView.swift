@@ -10,6 +10,11 @@ import SwiftUI
 struct CardView: View {
     typealias Card = MemoryGame<String>.Card
     let card: Card
+    var time: Date
+    var percentTimeRemaining: Double {
+        let interval = time.timeIntervalSinceNow
+        return max(0, 10 + Double(interval)) / 10
+    }
     
     private struct Constants {
         static let inset: CGFloat = 5
@@ -25,25 +30,33 @@ struct CardView: View {
     }
     
     var body: some View {
-        Pie(endAngle: .degrees(240))
-            .opacity(Constants.Pie.opacity)
-            .overlay(
-                Text(card.content)
-                    .font(.system(size: Constants.FontSize.largest))
-                    .minimumScaleFactor(Constants.FontSize.scaleFactor)
-                    .multilineTextAlignment(.center)
-                    .aspectRatio(1, contentMode: .fit)
-                    .padding(Constants.Pie.inset)
-                    .rotationEffect(.degrees(card.isMatched ? 360 : 0))
-                    .animation(.spin(duration: 1), value: card.isMatched ? 1 : 0)
-            )
-            .padding(Constants.inset)
-            .modifier(Cardify(isFaceUp: card.isFaceUp))
-            .opacity(card.isFaceUp || !card.isMatched ? 1 : 0)
+        TimelineView(.animation) { timeline in
+            if card.isFaceUp || !card.isMatched {
+                Pie(endAngle: .degrees(percentTimeRemaining * 360))
+                    .opacity(Constants.Pie.opacity)
+                    .overlay(cardContents.padding(Constants.Pie.inset))
+                    .padding(Constants.inset)
+                    .cardify(isFaceUp: card.isFaceUp)
+                    .transition(.scale)
+            } else {
+                Color.clear
+            }
+        }
     }
     
-    init (_ card: Card) {
+    var cardContents: some View {
+        Text(card.content)
+            .font(.system(size: Constants.FontSize.largest))
+            .minimumScaleFactor(Constants.FontSize.scaleFactor)
+            .multilineTextAlignment(.center)
+            .aspectRatio(1, contentMode: .fit)
+            .rotationEffect(.degrees(card.isMatched ? 360 : 0))
+            .animation(.spin(duration: 1), value: card.isMatched ? 1 : 0)
+    }
+    
+    init(_ card: Card, time: Date = Date.now) {
         self.card = card
+        self.time = time
     }
 }
 
