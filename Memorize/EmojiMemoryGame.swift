@@ -13,8 +13,6 @@ class EmojiMemoryGame: ObservableObject {
     @Published private var memoryGame: MemoryGame<String>
     @Published private(set) var chosenEmojiTheme: EmojiTheme
     
-    private let emojiThemes: [EmojiTheme]
-    
     var cards: Array<Card> {
         return memoryGame.cards
     }
@@ -31,47 +29,19 @@ class EmojiMemoryGame: ObservableObject {
         return memoryGame.time
     }
     
-    var emojiThemeColor: Gradient {
-        switch chosenEmojiTheme.color {
-        case "orange":
-            return Gradient(colors: [.orange])
-        case "pink":
-            return Gradient(colors: [.pink])
-        case "green":
-            return Gradient(colors: [.green])
-        case "blue":
-            return Gradient(colors: [.blue])
-        case "red":
-            return Gradient(colors: [.red])
-        case "yellow":
-            return Gradient(colors: [.yellow])
-        case "purpleGradient":
-            return Gradient(colors: [.purple, .blue])
-        default:
-            return Gradient(colors: [.black])
-        }
-    }
-    
     
     // MARK: Initializers
     
-    init() {
+    init(theme: EmojiTheme) {
         self.memoryGame = .init(numberOfPairsOfCards: 12) { pairIndex in
             return ""
         }
-        self.emojiThemes = Self.createEmojiThemes()
         
-        self.chosenEmojiTheme = EmojiTheme(
-            name: "Halloween",
-            emojis: ["👻", "🎃", "🕷️", "😈", "💀", "🕸️", "🧙‍♂️", "🙀", "👹", "😱", "☠️", "🍭"],
-            numberOfPairs: 12,
-            color: "orange"
-        )
+        self.chosenEmojiTheme = theme
         createMemoryGame()
     }
     
     private func createMemoryGame() {
-        refreshChosenEmoji()
         if !chosenEmojiTheme.showsFixedNumberOfCards {
             chosenEmojiTheme.changeNumberOfPairs(to: Int.random(in: 2...chosenEmojiTheme.emojis.count))
         }
@@ -85,61 +55,6 @@ class EmojiMemoryGame: ObservableObject {
         
         shuffleCards()
         resetScore()
-    }
-    
-    private func refreshChosenEmoji() {
-        let randomIndex = Int.random(in: 0..<emojiThemes.count)
-        chosenEmojiTheme = self.emojiThemes.count >= 1 ? self.emojiThemes[randomIndex] : EmojiTheme(
-            name: "Halloween",
-            emojis: ["👻", "🎃", "🕷️", "😈", "💀", "🕸️", "🧙‍♂️", "🙀", "👹", "😱", "☠️", "🍭"],
-            numberOfPairs: 12,
-            color: "orange"
-        )
-        
-        chosenEmojiTheme.shuffleEmojis()
-    }
-    
-    static func createEmojiThemes() -> [EmojiTheme] {
-        [
-            EmojiTheme(
-                name: "Halloween",
-                emojis: ["👻", "🎃", "🕷️", "😈", "💀", "🕸️", "🧙‍♂️", "🙀", "👹", "😱", "☠️", "🍭"],
-                numberOfPairs: 12,
-                color: "orange"
-            ),
-            EmojiTheme(
-                name: "Animals",
-                emojis: ["🐶", "🐱", "🐭", "🐹", "🐰", "🐻", "🐼", "🐨", "🐵", "🐿️", "🐦", "🐧"],
-                numberOfPairs: 12,
-                color: "green"
-            ),
-            EmojiTheme(
-                name: "Ocean",
-                emojis: ["🐠", "🐟", "🐙", "🐚", "🐦", "🦅", "🐡", "🐌", "🐞", "🦋", "🐊", "🐢"],
-                numberOfPairs: 12,
-                color: "blue",
-                showsFixedNumberOfCards: false
-            ),
-            EmojiTheme(
-                name: "Candy",
-                emojis: ["🍬", "🍭", "🍫", "🍦", "🍩", "🍪", "🍰"],
-                numberOfPairs: 6,
-                color: "purpleGradient"
-            ),
-            EmojiTheme(
-                name: "Vehicles",
-                emojis: ["🚗", "🚀", "🚙", "🚐", "🚌", "🚎", "🚍", "🚕", "🚔", "🚛"],
-                numberOfPairs: 10,
-                color: "red"
-            ),
-            EmojiTheme(
-                name: "Faces",
-                emojis: ["😄", "😁", "😂", "🤣", "😃", "🤪", "😅", "😆", "😇", "😊"],
-                numberOfPairs: 8,
-                color: "yellow",
-                showsFixedNumberOfCards: false
-            ),
-        ]
     }
     
     // MARK: - Intents
@@ -167,5 +82,62 @@ class EmojiMemoryGame: ObservableObject {
     func setEmojiTheme(_ emojiTheme: EmojiTheme) {
         self.chosenEmojiTheme = emojiTheme
         createMemoryGame()
+    }
+}
+
+
+extension EmojiTheme {
+    static func createEmojiThemes() -> [EmojiTheme] {
+        [
+            EmojiTheme(
+                name: "Halloween",
+                emojis: ["👻", "🎃", "🕷️", "😈", "💀", "🕸️", "🧙‍♂️", "🙀", "👹", "😱", "☠️", "🍭"],
+                numberOfPairs: 12,
+                color: RGBA(color: .orange)
+            ),
+            EmojiTheme(
+                name: "Animals",
+                emojis: ["🐶", "🐱", "🐭", "🐹", "🐰", "🐻", "🐼", "🐨", "🐵", "🐿️", "🐦", "🐧"],
+                numberOfPairs: 12,
+                color: RGBA(color: .green)
+            ),
+            EmojiTheme(
+                name: "Ocean",
+                emojis: ["🐠", "🐟", "🐙", "🐚", "🐦", "🦅", "🐡", "🐌", "🐞", "🦋", "🐊", "🐢"],
+                numberOfPairs: 12,
+                color: RGBA(color: .blue),
+                showsFixedNumberOfCards: false
+            ),
+            EmojiTheme(
+                name: "Candy",
+                emojis: ["🍬", "🍭", "🍫", "🍦", "🍩", "🍪", "🍰"],
+                numberOfPairs: 6,
+                color: RGBA(color: .purple)
+            ),
+            EmojiTheme(
+                name: "Vehicles",
+                emojis: ["🚗", "🚀", "🚙", "🚐", "🚌", "🚎", "🚍", "🚕", "🚔", "🚛"],
+                numberOfPairs: 10,
+                color: RGBA(color: .red)
+            ),
+            EmojiTheme(
+                name: "Faces",
+                emojis: ["😄", "😁", "😂", "🤣", "😃", "🤪", "😅", "😆", "😇", "😊"],
+                numberOfPairs: 8,
+                color: RGBA(color: .yellow),
+                showsFixedNumberOfCards: false
+            ),
+        ]
+    }
+    
+    static let defaultTheme: EmojiTheme =  EmojiTheme(
+        name: "Halloween",
+        emojis: ["👻", "🎃", "🕷️", "😈", "💀", "🕸️", "🧙‍♂️", "🙀", "👹", "😱", "☠️", "🍭"],
+        numberOfPairs: 12,
+        color: RGBA(color: .orange)
+    )
+    
+    var colorView: Color {
+        Color(rgba: color)
     }
 }

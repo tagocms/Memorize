@@ -9,7 +9,7 @@ import SwiftUI
 
 struct EmojiMemoryGameView: View {
     typealias Card = MemoryGame<String>.Card
-    @ObservedObject var viewModel: EmojiMemoryGame
+    @StateObject var viewModel: EmojiMemoryGame
     // MARK: UI State
     @State private var lastScoreChange: (amount: Int, causedByCardId: Card.ID) = (0, "")
     @State private var dealt = Set<Card.ID>()
@@ -22,13 +22,12 @@ struct EmojiMemoryGameView: View {
     private let deckWidth: CGFloat = 50
     
     
-    init(_ game: EmojiMemoryGame) {
-        self._viewModel = ObservedObject(initialValue: game)
+    init(theme: EmojiTheme) {
+        self._viewModel = StateObject(wrappedValue: EmojiMemoryGame(theme: theme))
     }
     
     var body: some View {
         VStack(alignment: .center) {
-            title
             cards
             Spacer()
             HStack {
@@ -40,6 +39,7 @@ struct EmojiMemoryGameView: View {
                 deck
             }
         }
+        .navigationTitle(viewModel.chosenEmojiTheme.name)
         .padding()
         .onChange(of: viewModel.chosenEmojiTheme) {
             withAnimation {
@@ -72,11 +72,6 @@ struct EmojiMemoryGameView: View {
         }
     }
     
-    var title: some View {
-        Text("Memorize: \(viewModel.chosenEmojiTheme.name)")
-            .font(.largeTitle.bold())
-    }
-    
     var cards: some View {
         AspectVGrid(viewModel.cards, aspectRatio: cardAspectRatio) { card in
             if isDealt(card) {
@@ -91,7 +86,7 @@ struct EmojiMemoryGameView: View {
                     }
             }
         }
-        .foregroundStyle(viewModel.emojiThemeColor)
+        .foregroundStyle(viewModel.chosenEmojiTheme.colorView)
     }
     
     @ViewBuilder private var deck: some View {
@@ -103,7 +98,7 @@ struct EmojiMemoryGameView: View {
                         .transition(.asymmetric(insertion: .identity, removal: .identity))
                 }
             }
-            .foregroundStyle(viewModel.emojiThemeColor)
+            .foregroundStyle(viewModel.chosenEmojiTheme.colorView)
             .frame(width: deckWidth, height: deckWidth / cardAspectRatio)
             .onTapGesture {
                 deal()
@@ -144,5 +139,7 @@ struct EmojiMemoryGameView: View {
 }
 
 #Preview {
-    EmojiMemoryGameView(EmojiMemoryGame())
+    NavigationView {
+        EmojiMemoryGameView(theme: EmojiTheme.defaultTheme)
+    }
 }

@@ -7,15 +7,17 @@
 
 import Foundation
 
-struct EmojiTheme: Identifiable, Equatable {
-    let id = UUID()
+struct EmojiTheme: Identifiable, Equatable, Codable, Hashable {
+    typealias ID = UUID
+    var id: UUID
     let name: String
     private(set) var emojis: [String]
     private(set) var numberOfPairs: Int
-    let color: String
+    let color: RGBA
     let showsFixedNumberOfCards: Bool
     
-    init(name: String, emojis: [String], numberOfPairs: Int, color: String, showsFixedNumberOfCards: Bool = true) {
+    init(id: UUID = UUID(), name: String, emojis: [String], numberOfPairs: Int, color: RGBA, showsFixedNumberOfCards: Bool = true) {
+        self.id = id
         self.name = name
         self.emojis = emojis
         if numberOfPairs > emojis.count {
@@ -37,5 +39,4 @@ struct EmojiTheme: Identifiable, Equatable {
         emojis.shuffle()
     }
 }
-
 
