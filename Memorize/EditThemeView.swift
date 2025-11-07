@@ -18,6 +18,8 @@ struct EditThemeView: View {
     @State private var emojiBeingDragged: String?
     @State private var scaleEffect: CGFloat = 1
     @State private var isCollision = false
+    @State private var emojiInitialPositions: [String: CGPoint] = [:]
+    @State private var trashPosition: CGPoint = .zero
     
     let screenWidth: CGFloat = UIScreen.main.bounds.maxX
     
@@ -31,8 +33,6 @@ struct EditThemeView: View {
         .onAppear {
             if theme.name.isEmpty {
                 focusState = .name
-            } else {
-                focusState = .emojis
             }
         }
         .onChange(of: emojiBeingDragged) {
@@ -54,7 +54,6 @@ struct EditThemeView: View {
     }
     
     var emojisSection: some View {
-        // TODO: Terminar de fazer a deleção de emojis
         Section("emojis") {
             addEmojisTextField
             registeredEmojis
@@ -80,6 +79,8 @@ struct EditThemeView: View {
                     .font(.title3.bold())
                 TextField("Add emojis here", text: $emojisToAdd)
                     .focused($focusState, equals: .emojis)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
             }
             addEmojisButtons
         }
@@ -87,13 +88,13 @@ struct EditThemeView: View {
     
     var addEmojisButtons: some View {
         HStack(spacing: 20) {
-            Button("Clear") {
+            Button("Clear", role: .destructive) {
                 emojisToAdd = ""
             }
             .buttonStyle(.plain)
-            .foregroundStyle(.blue)
+            .foregroundStyle(.red)
             
-            Button("Save") {
+            Button("Add") {
                 var cleanedEmojis = emojisToAdd.trimmingCharacters(in: .whitespacesAndNewlines)
                 cleanedEmojis = cleanedEmojis.filter { $0.isEmoji }
                 let emojisToAddArray = cleanedEmojis.map { String($0) }.uniqued
@@ -103,26 +104,21 @@ struct EditThemeView: View {
             .buttonStyle(.plain)
             .foregroundStyle(.blue)
         }
+        .disabled(emojisToAdd.isEmpty)
     }
     
     @ViewBuilder
     var registeredEmojis: some View {
         let columns = [GridItem(.adaptive(minimum: 40), spacing: 4, alignment: .center)]
         
-        GeometryReader { geometry in
-            VStack(alignment: .leading) {
-                registeredEmojisHeader
-                LazyVGrid(columns: columns) {
-                    ForEach(theme.emojis.uniqued, id: \.self) { emoji in
-                        Text(emoji)
-                            .offset(emoji == emojiBeingDragged ? dragGestureOffset : .zero)
-                            .gesture(dragGesture(for: emoji, geometry: geometry))
-                            .scaleEffect(emoji == emojiBeingDragged ? scaleEffect : 1)
-                    }
+        VStack(alignment: .leading) {
+            registeredEmojisHeader
+            LazyVGrid(columns: columns) {
+                ForEach(theme.emojis.uniqued, id: \.self) { emoji in
+                    emojiText(for: emoji)
                 }
             }
         }
-        .frame(height: max(120, CGFloat(ceil(Double(theme.emojis.count) / 8.0)) * 48))
     }
     
     var registeredEmojisHeader: some View {
@@ -130,7 +126,7 @@ struct EditThemeView: View {
             VStack(alignment: .leading) {
                 Text("Registered emojis")
                     .font(.title3.bold())
-                Text("Drag the emoji to the trash to remove it")
+                Text(focusState == nil ? "Drag an emoji to remove it" : "Added emojis will appear here")
                     .font(.subheadline.italic())
             }
             Spacer()
@@ -140,16 +136,36 @@ struct EditThemeView: View {
                     .foregroundStyle(.red)
                     .scaleEffect(isCollision ? scaleEffect : 1)
                     .background(
-                        // This will help us identify the trash area
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(isCollision ? Color.red.opacity(0.3) : Color.clear)
-                            .frame(width: 50, height: 50)
+                        GeometryReader { geometry in
+                            Color.clear
+                                .onAppear {
+                                    trashPosition = geometry.frame(in: .global).center
+                                }
+                        }
                     )
             }
         }
     }
     
-    private func dragGesture(for emoji: String, geometry: GeometryProxy) -> some Gesture {
+    private func emojiText(for emoji: String) -> some View {
+        Text(emoji)
+            .background(
+                GeometryReader { geometry in
+                    Color.clear
+                        .onAppear {
+                            emojiInitialPositions[emoji] = geometry.frame(in: .global).center
+                        }
+                        .onChange(of: theme.emojis) {
+                            emojiInitialPositions[emoji] = geometry.frame(in: .global).center
+                        }
+                }
+            )
+            .offset(emoji == emojiBeingDragged ? dragGestureOffset : .zero)
+            .gesture(dragGesture(for: emoji))
+            .allowsHitTesting(focusState == nil)
+    }
+    
+    private func dragGesture(for emoji: String) -> some Gesture {
         DragGesture()
             .updating($dragGestureOffset) { offset, dragGestureOffset, _ in
                 withAnimation {
@@ -157,12 +173,12 @@ struct EditThemeView: View {
                         emojiBeingDragged = emoji
                     }
                     dragGestureOffset = offset.translation
-                    isCollision = checkCollision(for: offset, in: geometry)
+                    isCollision = checkCollision(for: offset)
                 }
             }
             .onEnded { offset in
                 withAnimation {
-                    if checkCollision(for: offset, in: geometry) {
+                    if checkCollision(for: offset) {
                         theme.emojis.remove(emoji)
                     }
                     emojiBeingDragged = nil
@@ -171,28 +187,34 @@ struct EditThemeView: View {
             }
     }
     
-    private func checkCollision(for offset: GestureStateGesture<DragGesture, CGSize>.Value, in geometry: GeometryProxy) -> Bool {
-        // Calculate collision with trash icon area
-        // Trash is positioned in the top-right of the header
-        let trashX = geometry.frame(in: .local).maxX // Approximate trash position
-        let trashY: CGFloat = 0 // Approximate trash Y position
-        let trashSize: CGFloat = 50
-        
-        let currentEmojiX = offset.location.x
-        let currentEmojiY = offset.location.y
-        print("Current emoji x: \(currentEmojiX)")
-        
-        // Check if emoji is within trash area
-        let isInTrashArea = currentEmojiX >= trashX - trashSize &&
-                         currentEmojiX <= trashX + trashSize &&
-                         currentEmojiY >= trashY - trashSize &&
-                         currentEmojiY <= trashY + trashSize
-        
-        return isInTrashArea
+    private func checkCollision(for offset: GestureStateGesture<DragGesture, CGSize>.Value) -> Bool {
+        if let emojiBeingDragged,
+           var emojiPosition = emojiInitialPositions[emojiBeingDragged] {
+            
+            emojiPosition.x += offset.translation.width
+            emojiPosition.y += offset.translation.height
+            
+            if emojiPosition.distance(to: trashPosition) < 50 {
+                return true
+            }
+        }
+        return false
     }
 }
 
 #Preview {
     @Previewable @State var theme = EmojiTheme.defaultTheme
     return EditThemeView(theme: $theme)
+}
+
+extension CGRect {
+    var center: CGPoint {
+        return CGPoint(x: midX, y: midY)
+    }
+}
+
+extension CGPoint {
+    func distance(to other: CGPoint) -> CGFloat {
+        sqrt(pow(x - other.x, 2) + pow(y - other.y, 2))
+    }
 }
