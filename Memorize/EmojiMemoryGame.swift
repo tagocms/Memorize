@@ -42,8 +42,9 @@ class EmojiMemoryGame: ObservableObject {
     }
     
     private func createMemoryGame() {
+        chosenEmojiTheme.shuffleEmojis()
         if !chosenEmojiTheme.showsFixedNumberOfCards {
-            chosenEmojiTheme.changeNumberOfPairs(to: Int.random(in: 2...chosenEmojiTheme.emojis.count))
+            chosenEmojiTheme.changeNumberOfPairs(to: Int.random(in: min(2, chosenEmojiTheme.emojis.count)...max(2, chosenEmojiTheme.emojis.count)))
         }
         memoryGame = MemoryGame(numberOfPairsOfCards: chosenEmojiTheme.numberOfPairs) { pairIndex in
             if chosenEmojiTheme.emojis.indices.contains(pairIndex) {
@@ -138,6 +139,11 @@ extension EmojiTheme {
     )
     
     var colorView: Color {
-        Color(rgba: color)
+        get {
+            Color(rgba: color)
+        }
+        set {
+            color = RGBA(color: newValue)
+        }
     }
 }

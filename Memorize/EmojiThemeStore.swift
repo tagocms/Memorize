@@ -27,7 +27,9 @@ extension UserDefaults {
            let decodedData = try? decoder.decode([EmojiTheme].self, from: data) {
             return decodedData
         }
-        return EmojiTheme.createEmojiThemes()
+        let emojis = EmojiTheme.createEmojiThemes()
+        saveEmojiThemes(emojis, forKey: key)
+        return emojis
     }
     
     func saveEmojiThemes(_ emojiThemes: [EmojiTheme], forKey key: String) {

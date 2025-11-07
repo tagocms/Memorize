@@ -9,12 +9,19 @@ import Foundation
 
 struct EmojiTheme: Identifiable, Equatable, Codable, Hashable {
     typealias ID = UUID
-    var id: UUID
-    let name: String
-    private(set) var emojis: [String]
-    private(set) var numberOfPairs: Int
-    let color: RGBA
-    let showsFixedNumberOfCards: Bool
+    private(set) var id: ID
+    var name: String
+    var emojis: [String] {
+        didSet {
+            if emojis.count < numberOfPairs && emojis.count >= 2 {
+                numberOfPairs = emojis.count
+            }
+            emojis = emojis.uniqued
+        }
+    }
+    var numberOfPairs: Int
+    var color: RGBA
+    var showsFixedNumberOfCards: Bool
     
     init(id: UUID = UUID(), name: String, emojis: [String], numberOfPairs: Int, color: RGBA, showsFixedNumberOfCards: Bool = true) {
         self.id = id
